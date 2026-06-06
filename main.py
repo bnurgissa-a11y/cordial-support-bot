@@ -13,12 +13,20 @@ load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 if not BOT_TOKEN:
-    raise RuntimeError("BOT_TOKEN is missing. Add it to .env or Render Variables")
+    raise RuntimeError("BOT_TOKEN is missing")
 
 logging.basicConfig(level=logging.INFO)
 
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
+
+ORDERS_GROUP_ID = -5034159641
+FINANCE_GROUP_ID = -5012459213
+LOGISTICS_GROUP_ID = -5175392722
+PVZ_GROUP_ID = -5023952843
+TRAINING_GROUP_ID = -5236071492
+
+user_states = {}
 
 MAIN_MENU = ReplyKeyboardMarkup(
     keyboard=[
@@ -36,6 +44,12 @@ BACK_MENU = ReplyKeyboardMarkup(
     resize_keyboard=True,
 )
 
+def submenu(buttons):
+    return ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text=b)] for b in buttons] + [[KeyboardButton(text="⬅️ Назад")]],
+        resize_keyboard=True,
+    )
+
 @dp.message(CommandStart())
 async def start(message: Message):
     await message.answer(
@@ -46,150 +60,240 @@ async def start(message: Message):
 
 @dp.message(F.text == "⬅️ Назад")
 async def back(message: Message):
+    user_states.pop(message.from_user.id, None)
     await message.answer("Вы вернулись в главное меню:", reply_markup=MAIN_MENU)
 
 @dp.message(F.text == "📦 Заказы")
 async def orders(message: Message):
-    kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="🛒 Проверить заказ")],
-            [KeyboardButton(text="❌ Отмена заказа")],
-            [KeyboardButton(text="🔄 Изменить заказ")],
-            [KeyboardButton(text="📋 История заказов")],
-            [KeyboardButton(text="⬅️ Назад")],
-        ],
-        resize_keyboard=True,
+    await message.answer(
+        "Раздел: 📦 Заказы",
+        reply_markup=submenu([
+            "🛒 Проверить заказ",
+            "❌ Отмена заказа",
+            "🔄 Изменить заказ",
+            "📋 История заказов",
+        ])
     )
-    await message.answer("Раздел: 📦 Заказы", reply_markup=kb)
 
 @dp.message(F.text == "💰 Бонусы")
 async def bonuses(message: Message):
-    kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="💵 Не начислились бонусы")],
-            [KeyboardButton(text="📈 Как считается бонус")],
-            [KeyboardButton(text="🎁 Реферальный бонус")],
-            [KeyboardButton(text="🔷 Бинарный бонус")],
-            [KeyboardButton(text="👥 Матчинг бонус")],
-            [KeyboardButton(text="🏆 Структурный бонус")],
-            [KeyboardButton(text="⬅️ Назад")],
-        ],
-        resize_keyboard=True,
+    await message.answer(
+        "Раздел: 💰 Бонусы",
+        reply_markup=submenu([
+            "💵 Не начислились бонусы",
+            "📈 Как считается бонус",
+            "🎁 Реферальный бонус",
+            "🔷 Бинарный бонус",
+            "👥 Матчинг бонус",
+            "🏆 Структурный бонус",
+        ])
     )
-    await message.answer("Раздел: 💰 Бонусы", reply_markup=kb)
 
 @dp.message(F.text == "👥 Регистрация")
 async def registration(message: Message):
-    kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="🆔 Проблема с регистрацией")],
-            [KeyboardButton(text="🔑 Не могу войти")],
-            [KeyboardButton(text="📱 Смена телефона")],
-            [KeyboardButton(text="📧 Смена почты")],
-            [KeyboardButton(text="👤 Изменение данных")],
-            [KeyboardButton(text="⬅️ Назад")],
-        ],
-        resize_keyboard=True,
+    await message.answer(
+        "Раздел: 👥 Регистрация",
+        reply_markup=submenu([
+            "🆔 Проблема с регистрацией",
+            "🔑 Не могу войти",
+            "📱 Смена телефона",
+            "📧 Смена почты",
+            "👤 Изменение данных",
+        ])
     )
-    await message.answer("Раздел: 👥 Регистрация", reply_markup=kb)
 
 @dp.message(F.text == "🏪 ПВЗ")
 async def pvz(message: Message):
-    kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="📦 Остатки товара")],
-            [KeyboardButton(text="🚚 Поставка товара")],
-            [KeyboardButton(text="🔄 Возврат товара")],
-            [KeyboardButton(text="📄 Документы ПВЗ")],
-            [KeyboardButton(text="🏪 Открытие ПВЗ")],
-            [KeyboardButton(text="☎️ Связь с менеджером")],
-            [KeyboardButton(text="⬅️ Назад")],
-        ],
-        resize_keyboard=True,
+    await message.answer(
+        "Раздел: 🏪 ПВЗ",
+        reply_markup=submenu([
+            "📦 Остатки товара",
+            "🚚 Поставка товара",
+            "🔄 Возврат товара",
+            "📄 Документы ПВЗ",
+            "🏪 Открытие ПВЗ",
+            "☎️ Связь с менеджером",
+        ])
     )
-    await message.answer("Раздел: 🏪 ПВЗ", reply_markup=kb)
 
 @dp.message(F.text == "🚚 Доставка")
 async def delivery(message: Message):
-    kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="📍 Где мой заказ")],
-            [KeyboardButton(text="🚚 Статус доставки")],
-            [KeyboardButton(text="📦 Трек номер")],
-            [KeyboardButton(text="❌ Проблема доставки")],
-            [KeyboardButton(text="⬅️ Назад")],
-        ],
-        resize_keyboard=True,
+    await message.answer(
+        "Раздел: 🚚 Доставка",
+        reply_markup=submenu([
+            "📍 Где мой заказ",
+            "🚚 Статус доставки",
+            "📦 Трек номер",
+            "❌ Проблема доставки",
+        ])
     )
-    await message.answer("Раздел: 🚚 Доставка", reply_markup=kb)
 
 @dp.message(F.text == "💄 Продукция")
 async def products(message: Message):
-    kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="✨ ESROOM")],
-            [KeyboardButton(text="🌿 WELLSEED")],
-            [KeyboardButton(text="💙 Collagen Health & Beauty")],
-            [KeyboardButton(text="🦴 Calcium Madi D3")],
-            [KeyboardButton(text="📖 Инструкция применения")],
-            [KeyboardButton(text="📄 Сертификаты")],
-            [KeyboardButton(text="⬅️ Назад")],
-        ],
-        resize_keyboard=True,
+    await message.answer(
+        "Раздел: 💄 Продукция",
+        reply_markup=submenu([
+            "✨ ESROOM",
+            "🌿 WELLSEED",
+            "💙 Collagen Health & Beauty",
+            "🦴 Calcium Madi D3",
+            "📖 Инструкция применения",
+            "📄 Сертификаты",
+        ])
     )
-    await message.answer("Раздел: 💄 Продукция", reply_markup=kb)
 
 @dp.message(F.text == "🎓 Обучение")
 async def education(message: Message):
-    kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="🚀 Старт новичка")],
-            [KeyboardButton(text="🎯 Маркетинг план")],
-            [KeyboardButton(text="👥 Рекрутинг")],
-            [KeyboardButton(text="📈 Построение команды")],
-            [KeyboardButton(text="🎓 Академия Cordial Care")],
-            [KeyboardButton(text="⬅️ Назад")],
-        ],
-        resize_keyboard=True,
+    await message.answer(
+        "Раздел: 🎓 Обучение",
+        reply_markup=submenu([
+            "🚀 Старт новичка",
+            "🎯 Маркетинг план",
+            "👥 Рекрутинг",
+            "📈 Построение команды",
+            "🎓 Академия Cordial Care",
+        ])
     )
-    await message.answer("Раздел: 🎓 Обучение", reply_markup=kb)
 
 @dp.message(F.text == "📄 Документы")
 async def documents(message: Message):
-    kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="📋 Маркетинг план PDF")],
-            [KeyboardButton(text="📄 Политика компании")],
-            [KeyboardButton(text="🏪 Регламент ПВЗ")],
-            [KeyboardButton(text="🎁 Условия акций")],
-            [KeyboardButton(text="⬅️ Назад")],
-        ],
-        resize_keyboard=True,
+    await message.answer(
+        "Раздел: 📄 Документы",
+        reply_markup=submenu([
+            "📋 Маркетинг план PDF",
+            "📄 Политика компании",
+            "🏪 Регламент ПВЗ",
+            "🎁 Условия акций",
+        ])
     )
-    await message.answer("Раздел: 📄 Документы", reply_markup=kb)
 
 @dp.message(F.text == "☎️ Связаться с офисом")
 async def office(message: Message):
-    kb = ReplyKeyboardMarkup(
-        keyboard=[
-            [KeyboardButton(text="💰 Финансовый отдел")],
-            [KeyboardButton(text="📦 Отдел заказов")],
-            [KeyboardButton(text="🚚 Логистика")],
-            [KeyboardButton(text="🏪 Отдел ПВЗ")],
-            [KeyboardButton(text="🎓 Обучение")],
-            [KeyboardButton(text="📞 Заказать звонок")],
-            [KeyboardButton(text="⬅️ Назад")],
-        ],
-        resize_keyboard=True,
+    await message.answer(
+        "Выберите отдел офиса:",
+        reply_markup=submenu([
+            "💰 Финансовый отдел",
+            "📦 Отдел заказов",
+            "🚚 Логистика",
+            "🏪 Отдел ПВЗ",
+            "🎓 Отдел обучения",
+        ])
     )
-    await message.answer("Выберите отдел офиса:", reply_markup=kb)
+
+REQUEST_ROUTES = {
+    "🛒 Проверить заказ": ("Заказы", ORDERS_GROUP_ID),
+    "❌ Отмена заказа": ("Заказы", ORDERS_GROUP_ID),
+    "🔄 Изменить заказ": ("Заказы", ORDERS_GROUP_ID),
+    "📋 История заказов": ("Заказы", ORDERS_GROUP_ID),
+    "📦 Отдел заказов": ("Заказы", ORDERS_GROUP_ID),
+
+    "💵 Не начислились бонусы": ("Финансы", FINANCE_GROUP_ID),
+    "💰 Финансовый отдел": ("Финансы", FINANCE_GROUP_ID),
+
+    "🆔 Проблема с регистрацией": ("Регистрация", TRAINING_GROUP_ID),
+    "🔑 Не могу войти": ("Регистрация", TRAINING_GROUP_ID),
+    "📱 Смена телефона": ("Регистрация", TRAINING_GROUP_ID),
+    "📧 Смена почты": ("Регистрация", TRAINING_GROUP_ID),
+    "👤 Изменение данных": ("Регистрация", TRAINING_GROUP_ID),
+
+    "📦 Остатки товара": ("ПВЗ", PVZ_GROUP_ID),
+    "🚚 Поставка товара": ("ПВЗ", PVZ_GROUP_ID),
+    "🔄 Возврат товара": ("ПВЗ", PVZ_GROUP_ID),
+    "📄 Документы ПВЗ": ("ПВЗ", PVZ_GROUP_ID),
+    "🏪 Открытие ПВЗ": ("ПВЗ", PVZ_GROUP_ID),
+    "☎️ Связь с менеджером": ("ПВЗ", PVZ_GROUP_ID),
+    "🏪 Отдел ПВЗ": ("ПВЗ", PVZ_GROUP_ID),
+
+    "📍 Где мой заказ": ("Логистика", LOGISTICS_GROUP_ID),
+    "🚚 Статус доставки": ("Логистика", LOGISTICS_GROUP_ID),
+    "📦 Трек номер": ("Логистика", LOGISTICS_GROUP_ID),
+    "❌ Проблема доставки": ("Логистика", LOGISTICS_GROUP_ID),
+    "🚚 Логистика": ("Логистика", LOGISTICS_GROUP_ID),
+
+    "🚀 Старт новичка": ("Обучение", TRAINING_GROUP_ID),
+    "🎯 Маркетинг план": ("Обучение", TRAINING_GROUP_ID),
+    "👥 Рекрутинг": ("Обучение", TRAINING_GROUP_ID),
+    "📈 Построение команды": ("Обучение", TRAINING_GROUP_ID),
+    "🎓 Академия Cordial Care": ("Обучение", TRAINING_GROUP_ID),
+    "🎓 Отдел обучения": ("Обучение", TRAINING_GROUP_ID),
+
+    "✨ ESROOM": ("Продукция", TRAINING_GROUP_ID),
+    "🌿 WELLSEED": ("Продукция", TRAINING_GROUP_ID),
+    "💙 Collagen Health & Beauty": ("Продукция", TRAINING_GROUP_ID),
+    "🦴 Calcium Madi D3": ("Продукция", TRAINING_GROUP_ID),
+    "📖 Инструкция применения": ("Продукция", TRAINING_GROUP_ID),
+    "📄 Сертификаты": ("Продукция", TRAINING_GROUP_ID),
+}
+
+@dp.message(F.text.in_(REQUEST_ROUTES.keys()))
+async def start_request(message: Message):
+    department, group_id = REQUEST_ROUTES[message.text]
+
+    user_states[message.from_user.id] = {
+        "step": "waiting_partner_id",
+        "department": department,
+        "topic": message.text,
+        "group_id": group_id,
+    }
+
+    await message.answer(
+        f"Вы выбрали: {message.text}\n\n"
+        "Введите ваш ID партнера:",
+        reply_markup=BACK_MENU
+    )
 
 @dp.message()
-async def get_chat_id(message: Message):
-    await message.answer(
-        f"Chat ID: {message.chat.id}\n"
-        f"Chat Title: {message.chat.title}"
-    )
+async def handle_request_steps(message: Message):
+    user_id = message.from_user.id
+    state = user_states.get(user_id)
+
+    if not state:
+        await message.answer(
+            "Пожалуйста, выберите раздел из меню.",
+            reply_markup=MAIN_MENU
+        )
+        return
+
+    if state["step"] == "waiting_partner_id":
+        state["partner_id"] = message.text
+        state["step"] = "waiting_problem"
+
+        await message.answer(
+            "Теперь подробно опишите ваш вопрос или проблему:"
+        )
+        return
+
+    if state["step"] == "waiting_problem":
+        problem = message.text
+        department = state["department"]
+        topic = state["topic"]
+        group_id = state["group_id"]
+        partner_id = state["partner_id"]
+
+        username = message.from_user.username
+        full_name = message.from_user.full_name
+        date = datetime.now().strftime("%d.%m.%Y %H:%M")
+
+        text = (
+            "📨 Новая заявка\n\n"
+            f"Отдел: {department}\n"
+            f"Тема: {topic}\n"
+            f"ID партнера: {partner_id}\n"
+            f"Имя: {full_name}\n"
+            f"Telegram: @{username if username else 'нет username'}\n"
+            f"Дата: {date}\n\n"
+            f"Вопрос:\n{problem}"
+        )
+
+        await bot.send_message(chat_id=group_id, text=text)
+
+        await message.answer(
+            "✅ Ваша заявка принята и отправлена в нужный отдел.\n\n"
+            "Менеджер рассмотрит обращение и свяжется с вами.",
+            reply_markup=MAIN_MENU
+        )
+
+        user_states.pop(user_id, None)
 
 async def main():
     await dp.start_polling(bot)
