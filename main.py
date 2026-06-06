@@ -185,12 +185,10 @@ async def office(message: Message):
     await message.answer("Выберите отдел офиса:", reply_markup=kb)
 
 @dp.message()
-async def fallback(message: Message):
+async def get_chat_id(message: Message):
     await message.answer(
-        "Ваш запрос принят.\n\n"
-        "На следующем этапе мы подключим создание заявок для офиса.\n"
-        "Пока выберите нужный раздел из меню.",
-        reply_markup=MAIN_MENU
+        f"Chat ID: {message.chat.id}\n"
+        f"Chat Title: {message.chat.title}"
     )
 
 async def main():
