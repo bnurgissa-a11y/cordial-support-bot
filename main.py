@@ -39,6 +39,7 @@ user_states = {}
 user_threads = {}
 tickets = {}
 ticket_counter = 1000
+ticket_messages = {}
 
 MAIN_MENU = ReplyKeyboardMarkup(
     keyboard=[
@@ -540,6 +541,32 @@ async def answer_ticket(message: Message):
 async def handle_message(message: Message):
     user_id = message.from_user.id
     state = user_states.get(user_id)
+    if message.chat.type != "private" and message.reply_to_message:
+        replied_message_id = message.reply_to_message.message_id
+
+        if replied_message_id in ticket_messages:
+            ticket_id = ticket_messages[replied_message_id]
+
+            if ticket_id not in tickets:
+                await message.answer("Заявка не найдена. Возможно, бот перезапускался.")
+                return
+
+            partner_user_id = tickets[ticket_id]["user_id"]
+            answer_text = message.text
+
+            if not answer_text:
+                await message.answer("Пока можно отправлять только текстовый ответ.")
+                return
+
+            await bot.send_message(
+                partner_user_id,
+                f"📩 Ответ службы поддержки Cordial Care\n\n"
+                f"Заявка №{ticket_id}\n\n"
+                f"{answer_text}"
+            )
+
+            await message.answer("✅ Ответ отправлен партнеру.")
+            return
     if message.text and message.text.startswith("/answer"):
         if message.chat.type == "private":
             await message.answer("Эта команда работает только в группе отдела.")
@@ -609,7 +636,9 @@ async def handle_message(message: Message):
                 f"Вопрос:\n{problem}"
             )
 
-            await bot.send_message(chat_id=group_id, text=text)
+            sent_message = await bot.send_message(chat_id=group_id, text=text)
+
+ticket_messages[sent_message.message_id] = ticket_id
 
             await message.answer(
                 "✅ Ваша заявка принята и отправлена в нужный отдел.\n\n"
