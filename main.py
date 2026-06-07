@@ -40,6 +40,7 @@ user_threads = {}
 tickets = {}
 ticket_counter = 1000
 ticket_messages = {}
+user_languages = {}
 
 MAIN_MENU = ReplyKeyboardMarkup(
     keyboard=[
@@ -59,6 +60,13 @@ BACK_MENU = ReplyKeyboardMarkup(
     keyboard=[[KeyboardButton(text="⬅️ Назад")]],
     resize_keyboard=True,
 )
+LANGUAGE_MENU = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="🇷🇺 Русский"), KeyboardButton(text="🇰🇿 Қазақша")],
+        [KeyboardButton(text="🇬🇧 English"), KeyboardButton(text="🇨🇳 中文")],
+    ],
+    resize_keyboard=True,
+)
 
 def submenu(buttons):
     return ReplyKeyboardMarkup(
@@ -67,6 +75,16 @@ def submenu(buttons):
     )
 
 async def ask_ai(user_id: int, question: str) -> str:
+    lang = user_languages.get(user_id, "ru")
+
+    language_instruction = {
+        "ru": "Отвечай на русском языке.",
+        "kk": "Қазақ тілінде жауап бер.",
+        "en": "Answer in English.",
+        "zh": "请用中文回答。",
+    }.get(lang, "Отвечай на русском языке.")
+
+    question = f"{language_instruction}\n\n{question}"
     if user_id not in user_threads:
         thread = await client.beta.threads.create()
         user_threads[user_id] = thread.id
@@ -107,11 +125,31 @@ async def ask_ai(user_id: int, question: str) -> str:
 @dp.message(CommandStart())
 async def start(message: Message):
     await message.answer(
-        "Добро пожаловать в Центр поддержки Cordial Care.\n\n"
-        "Выберите раздел или просто напишите вопрос AI-консультанту:",
+        "Выберите язык / Тілді таңдаңыз / Choose language / 请选择语言:",
+        reply_markup=LANGUAGE_MENU
+    )
+@dp.message(F.text.in_(["🇷🇺 Русский", "🇰🇿 Қазақша", "🇬🇧 English", "🇨🇳 中文"]))
+async def set_language(message: Message):
+    lang_map = {
+        "🇷🇺 Русский": "ru",
+        "🇰🇿 Қазақша": "kk",
+        "🇬🇧 English": "en",
+        "🇨🇳 中文": "zh",
+    }
+
+    user_languages[message.from_user.id] = lang_map[message.text]
+
+    texts = {
+        "ru": "Добро пожаловать в Центр поддержки Cordial Care.",
+        "kk": "Cordial Care қолдау орталығына қош келдіңіз.",
+        "en": "Welcome to Cordial Care Support Center.",
+        "zh": "欢迎来到 Cordial Care 支持中心。",
+    }
+
+    await message.answer(
+        texts[user_languages[message.from_user.id]],
         reply_markup=MAIN_MENU
     )
-
 @dp.message(F.text == "⬅️ Назад")
 async def back(message: Message):
     user_states.pop(message.from_user.id, None)
