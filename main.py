@@ -461,53 +461,61 @@ async def handle_message(message: Message):
     state = user_states.get(user_id)
 
     if state:
-      if state["step"] == "waiting_problem":
-    problem = message.text
-    department = state["department"]
-    topic = state["topic"]
-    group_id = state["group_id"]
-    partner_id = state["partner_id"]
+        if state["step"] == "waiting_partner_id":
+            state["partner_id"] = message.text
+            state["step"] = "waiting_problem"
+            await message.answer("Теперь подробно опишите ваш вопрос или проблему:")
+            return
 
-    global ticket_counter
+        if state["step"] == "waiting_problem":
+            problem = message.text
+            department = state["department"]
+            topic = state["topic"]
+            group_id = state["group_id"]
+            partner_id = state["partner_id"]
 
-    ticket_counter += 1
-    ticket_id = ticket_counter
+            global ticket_counter
+            ticket_counter += 1
+            ticket_id = ticket_counter
 
-    tickets[ticket_id] = {
-        "user_id": message.from_user.id,
-        "partner_id": partner_id,
-        "department": department,
-        "topic": topic,
-    }
+            tickets[ticket_id] = {
+                "user_id": message.from_user.id,
+                "partner_id": partner_id,
+                "department": department,
+                "topic": topic,
+            }
 
-    username = message.from_user.username
-    full_name = message.from_user.full_name
-    date = datetime.now().strftime("%d.%m.%Y %H:%M")
+            username = message.from_user.username
+            full_name = message.from_user.full_name
+            date = datetime.now().strftime("%d.%m.%Y %H:%M")
 
-    text = (
-        f"📨 Заявка #{ticket_id}\n\n"
-        f"Отдел: {department}\n"
-        f"Тема: {topic}\n"
-        f"ID партнера: {partner_id}\n"
-        f"Имя: {full_name}\n"
-        f"Telegram: @{username if username else 'нет username'}\n"
-        f"Дата: {date}\n\n"
-        f"Вопрос:\n{problem}"
-    )
+            text = (
+                f"📨 Заявка #{ticket_id}\n\n"
+                f"Отдел: {department}\n"
+                f"Тема: {topic}\n"
+                f"ID партнера: {partner_id}\n"
+                f"Имя: {full_name}\n"
+                f"Telegram: @{username if username else 'нет username'}\n"
+                f"Дата: {date}\n\n"
+                f"Вопрос:\n{problem}"
+            )
 
-    await bot.send_message(chat_id=group_id, text=text)
+            await bot.send_message(chat_id=group_id, text=text)
 
-    await message.answer(
-        "✅ Ваша заявка принята и отправлена в нужный отдел.\n\n"
-        "Менеджер рассмотрит обращение и свяжется с вами.",
-        reply_markup=MAIN_MENU
-    )
+            await message.answer(
+                "✅ Ваша заявка принята и отправлена в нужный отдел.\n\n"
+                "Менеджер рассмотрит обращение и свяжется с вами.",
+                reply_markup=MAIN_MENU
+            )
+
             user_states.pop(user_id, None)
             return
 
     await message.answer("⏳ AI-консультант готовит ответ...")
     answer = await ask_ai(user_id, message.text)
     await message.answer(answer, reply_markup=MAIN_MENU)
+
+
 @dp.message(F.text.startswith("/answer"))
 async def answer_ticket(message: Message):
     if message.chat.type == "private":
@@ -532,10 +540,10 @@ async def answer_ticket(message: Message):
             await message.answer("Заявка не найдена. Проверьте номер заявки.")
             return
 
-        user_id = tickets[ticket_id]["user_id"]
+        partner_user_id = tickets[ticket_id]["user_id"]
 
         await bot.send_message(
-            user_id,
+            partner_user_id,
             f"📩 Ответ службы поддержки Cordial Care\n\n"
             f"Заявка №{ticket_id}\n\n"
             f"{answer_text}"
