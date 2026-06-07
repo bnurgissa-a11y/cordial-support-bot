@@ -39,16 +39,15 @@ user_threads = {}
 
 MAIN_MENU = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="🤖 AI-консультант")],
         [KeyboardButton(text="📦 Заказы"), KeyboardButton(text="💰 Бонусы")],
         [KeyboardButton(text="👥 Регистрация"), KeyboardButton(text="🏪 ПВЗ")],
         [KeyboardButton(text="🚚 Доставка"), KeyboardButton(text="💄 Продукция")],
         [KeyboardButton(text="🎓 Обучение"), KeyboardButton(text="📄 Документы")],
+        [KeyboardButton(text="🤖 AI-консультант"), KeyboardButton(text="📸 Анализ кожи")],
         [KeyboardButton(text="☎️ Связаться с офисом")],
     ],
     resize_keyboard=True,
 )
-
 BACK_MENU = ReplyKeyboardMarkup(
     keyboard=[[KeyboardButton(text="⬅️ Назад")]],
     resize_keyboard=True,
@@ -113,6 +112,20 @@ async def back(message: Message):
 
 @dp.message(F.text == "🤖 AI-консультант")
 async def ai_intro(message: Message):
+@dp.message(F.text == "📸 Анализ кожи")
+async def skin_analysis_start(message: Message):
+    user_states[message.from_user.id] = {
+        "step": "waiting_skin_photo"
+    }
+
+    await message.answer(
+        "📸 Загрузите фото лица.\n\n"
+        "Требования:\n"
+        "• хорошее освещение\n"
+        "• лицо полностью видно\n"
+        "• без фильтров\n"
+        "• без очков"
+    )
     await message.answer(
         "Напишите ваш вопрос.\n\n"
         "Например:\n"
@@ -293,6 +306,22 @@ async def ai_topic_answer(message: Message):
         f"Ответь как Cordial AI Consultant по теме: {message.text}"
     )
     await message.answer(answer, reply_markup=MAIN_MENU)
+@dp.message(F.photo)
+async def handle_skin_photo(message: Message):
+    state = user_states.get(message.from_user.id)
+
+    if not state:
+        return
+
+    if state.get("step") != "waiting_skin_photo":
+        return
+
+    await message.answer(
+        "🔍 Фото получено.\n\n"
+        "Анализ кожи будет подключен на следующем этапе."
+    )
+
+    user_states.pop(message.from_user.id, None)
 
 @dp.message()
 async def handle_message(message: Message):
