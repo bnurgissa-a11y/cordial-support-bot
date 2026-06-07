@@ -2,6 +2,7 @@ import os
 import asyncio
 import logging
 from datetime import datetime
+import base64
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
@@ -310,19 +311,75 @@ async def ai_topic_answer(message: Message):
 async def handle_skin_photo(message: Message):
     state = user_states.get(message.from_user.id)
 
-    if not state:
+    if not state or state.get("step") != "waiting_skin_photo":
+        await message.answer(
+            "Фото получено. Для анализа кожи сначала нажмите кнопку 📸 Анализ кожи."
+        )
         return
 
-    if state.get("step") != "waiting_skin_photo":
-        return
+    await message.answer("🔍 Фото получено. Анализирую кожу...")
 
-    await message.answer(
-        "🔍 Фото получено.\n\n"
-        "Анализ кожи будет подключен на следующем этапе."
-    )
+    photo = message.photo[-1]
+    file = await bot.get_file(photo.file_id)
+    file_bytes = await bot.download_file(file.file_path)
+
+    image_base64 = base64.b64encode(file_bytes.read()).decode("utf-8")
+
+    prompt = """
+Ты — skin-коуч Cordial Care. Сделай анализ кожи по фото.
+
+Ответ строго по структуре:
+
+1. Тип кожи:
+2. Основные признаки:
+3. Возможные проблемы:
+4. Морщины:
+5. Пигментация:
+6. Поры:
+7. Уровень увлажненности:
+8. Что будет, если не ухаживать:
+9. Утренний уход:
+10. Вечерний уход:
+11. Рекомендации Cordial Care:
+12. Витамины и питание:
+
+Важно:
+- Не ставь медицинский диагноз.
+- Не обещай лечение.
+- Пиши на языке пользователя.
+- Рекомендуй CellCure, ESROOM Essence, Eye Cream, SPF, Cushion.
+- При необходимости рекомендуй Collagen Health & Beauty, Calcium Madi D3, Wellseed Omega 3, Wellseed Banaba.
+"""
+
+    try:
+        response = await client.responses.create(
+            model="gpt-4.1",
+            input=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "input_text", "text": prompt},
+                        {
+                            "type": "input_image",
+                            "image_url": f"data:image/jpeg;base64,{image_base64}",
+                        },
+                    ],
+                }
+            ],
+        )
+
+        answer = response.output_text[:3900]
+
+        await message.answer(answer, reply_markup=MAIN_MENU)
+
+    except Exception as e:
+        logging.exception(e)
+        await message.answer(
+            "Сейчас анализ фото временно недоступен. Попробуйте позже.",
+            reply_markup=MAIN_MENU
+        )
 
     user_states.pop(message.from_user.id, None)
-
 @dp.message()
 async def handle_message(message: Message):
     user_id = message.from_user.id
