@@ -324,7 +324,19 @@ async def documents(message: Message):
         "🏪 Регламент ПВЗ",
         "🎁 Условия акций",
     ]))
+PDF_LINKS = {
+    "📋 Маркетинг план PDF": "https://drive.google.com/file/d/1TYCiZZmXeJIsd-S1PLeWvuMcSe3Lp1Qf/view?usp=sharing",
+    "📄 Политика компании": "https://drive.google.com/file/d/1Xw9tCzqGyf38J1NRLZtYorKAxrUMo2V7/view?usp=sharing",
+    "🏪 Регламент ПВЗ": "https://drive.google.com/file/d/1Xw9tCzqGyf38J1NRLZtYorKAxrUMo2V7/view?usp=sharing",
+    "🎁 Условия акций": "https://drive.google.com/file/d/1TYCiZZmXeJIsd-S1PLeWvuMcSe3Lp1Qf/view?usp=sharing",
+}
 
+@dp.message(F.text.in_(PDF_LINKS.keys()))
+async def send_pdf_link(message: Message):
+    await message.answer(
+        f"📄 Материал Cordial Care:\n\n{PDF_LINKS[message.text]}",
+        reply_markup=MAIN_MENU
+    )
 @dp.message(F.text == "☎️ Связаться с офисом")
 async def office(message: Message):
     await message.answer("Выберите отдел офиса:", reply_markup=submenu([
