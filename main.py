@@ -540,7 +540,35 @@ async def answer_ticket(message: Message):
 async def handle_message(message: Message):
     user_id = message.from_user.id
     state = user_states.get(user_id)
+    if message.text and message.text.startswith("/answer"):
+        if message.chat.type == "private":
+            await message.answer("Эта команда работает только в группе отдела.")
+            return
 
+        parts = message.text.split(maxsplit=2)
+
+        if len(parts) < 3:
+            await message.answer("Формат: /answer 1001 Ваш ответ партнеру")
+            return
+
+        ticket_id = int(parts[1])
+        answer_text = parts[2]
+
+        if ticket_id not in tickets:
+            await message.answer("Заявка не найдена. Создайте новую заявку после перезапуска.")
+            return
+
+        partner_user_id = tickets[ticket_id]["user_id"]
+
+        await bot.send_message(
+            partner_user_id,
+            f"📩 Ответ службы поддержки Cordial Care\n\n"
+            f"Заявка №{ticket_id}\n\n"
+            f"{answer_text}"
+        )
+
+        await message.answer("✅ Ответ отправлен партнеру.")
+        return
     if state:
         if state["step"] == "waiting_partner_id":
             state["partner_id"] = message.text
