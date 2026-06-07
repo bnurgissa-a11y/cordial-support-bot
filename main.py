@@ -455,6 +455,43 @@ async def handle_skin_photo(message: Message):
         )
 
     user_states.pop(message.from_user.id, None)
+@dp.message(F.text.startswith("/answer"))
+async def answer_ticket(message: Message):
+    if message.chat.type == "private":
+        await message.answer("Эта команда работает только в группе отдела.")
+        return
+
+    try:
+        parts = message.text.split(maxsplit=2)
+
+        if len(parts) < 3:
+            await message.answer(
+                "Неверный формат.\n\n"
+                "Правильно:\n"
+                "/answer 1001 Ваш ответ партнеру"
+            )
+            return
+
+        ticket_id = int(parts[1])
+        answer_text = parts[2]
+
+        if ticket_id not in tickets:
+            await message.answer("Заявка не найдена. Проверьте номер заявки.")
+            return
+
+        partner_user_id = tickets[ticket_id]["user_id"]
+
+        await bot.send_message(
+            partner_user_id,
+            f"📩 Ответ службы поддержки Cordial Care\n\n"
+            f"Заявка №{ticket_id}\n\n"
+            f"{answer_text}"
+        )
+
+        await message.answer("✅ Ответ отправлен партнеру.")
+
+    except Exception as e:
+        await message.answer(f"Ошибка при отправке ответа: {e}")
 @dp.message()
 async def handle_message(message: Message):
     user_id = message.from_user.id
@@ -516,43 +553,6 @@ async def handle_message(message: Message):
     await message.answer(answer, reply_markup=MAIN_MENU)
 
 
-@dp.message(F.text.startswith("/answer"))
-async def answer_ticket(message: Message):
-    if message.chat.type == "private":
-        await message.answer("Эта команда работает только в группе отдела.")
-        return
-
-    try:
-        parts = message.text.split(maxsplit=2)
-
-        if len(parts) < 3:
-            await message.answer(
-                "Неверный формат.\n\n"
-                "Правильно:\n"
-                "/answer 1001 Ваш ответ партнеру"
-            )
-            return
-
-        ticket_id = int(parts[1])
-        answer_text = parts[2]
-
-        if ticket_id not in tickets:
-            await message.answer("Заявка не найдена. Проверьте номер заявки.")
-            return
-
-        partner_user_id = tickets[ticket_id]["user_id"]
-
-        await bot.send_message(
-            partner_user_id,
-            f"📩 Ответ службы поддержки Cordial Care\n\n"
-            f"Заявка №{ticket_id}\n\n"
-            f"{answer_text}"
-        )
-
-        await message.answer("✅ Ответ отправлен партнеру.")
-
-    except Exception as e:
-        await message.answer(f"Ошибка при отправке ответа: {e}")
 async def main():
     await dp.start_polling(bot)
 
