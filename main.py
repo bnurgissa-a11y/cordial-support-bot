@@ -467,23 +467,24 @@ async def handle_message(message: Message):
             await message.answer("Теперь подробно опишите ваш вопрос или проблему:")
             return
 
-        if state["step"] == "waiting_problem":
+                if state["step"] == "waiting_problem":
             problem = message.text
             department = state["department"]
             topic = state["topic"]
             group_id = state["group_id"]
             partner_id = state["partner_id"]
-global ticket_counter
 
-ticket_counter += 1
-ticket_id = ticket_counter
+            global ticket_counter
 
-tickets[ticket_id] = {
-    "user_id": message.from_user.id,
-    "partner_id": partner_id,
-    "department": department,
-    "topic": topic,
-}
+            ticket_counter += 1
+            ticket_id = ticket_counter
+
+            tickets[ticket_id] = {
+                "user_id": message.from_user.id,
+                "partner_id": partner_id,
+                "department": department,
+                "topic": topic,
+            }
 
             username = message.from_user.username
             full_name = message.from_user.full_name
