@@ -541,6 +541,7 @@ async def answer_ticket(message: Message):
 async def handle_message(message: Message):
     user_id = message.from_user.id
     state = user_states.get(user_id)
+
     if message.chat.type != "private" and message.reply_to_message:
         replied_message_id = message.reply_to_message.message_id
 
@@ -548,14 +549,18 @@ async def handle_message(message: Message):
             ticket_id = ticket_messages[replied_message_id]
 
             if ticket_id not in tickets:
-                await message.answer("Заявка не найдена. Возможно, бот перезапускался.")
+                await message.answer(
+                    "Заявка не найдена. Возможно, бот перезапускался."
+                )
                 return
 
             partner_user_id = tickets[ticket_id]["user_id"]
             answer_text = message.text
 
             if not answer_text:
-                await message.answer("Пока можно отправлять только текстовый ответ.")
+                await message.answer(
+                    "Пока можно отправлять только текстовый ответ."
+                )
                 return
 
             await bot.send_message(
