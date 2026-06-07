@@ -112,6 +112,15 @@ async def back(message: Message):
 
 @dp.message(F.text == "🤖 AI-консультант")
 async def ai_intro(message: Message):
+    await message.answer(
+        "Напишите ваш вопрос.\n\n"
+        "Например:\n"
+        "• Как принимать Calcium Madi D3?\n"
+        "• Как считается бинарный бонус?\n"
+        "• Что лучше для сухой кожи?\n"
+        "• Напиши скрипт для приглашения в бизнес."
+    )
+
 @dp.message(F.text == "📸 Анализ кожи")
 async def skin_analysis_start(message: Message):
     user_states[message.from_user.id] = {
@@ -126,15 +135,6 @@ async def skin_analysis_start(message: Message):
         "• без фильтров\n"
         "• без очков"
     )
-    await message.answer(
-        "Напишите ваш вопрос.\n\n"
-        "Например:\n"
-        "• Как принимать Calcium Madi D3?\n"
-        "• Как считается бинарный бонус?\n"
-        "• Что лучше для сухой кожи?\n"
-        "• Напиши скрипт для приглашения в бизнес."
-    )
-
 @dp.message(F.text == "📦 Заказы")
 async def orders(message: Message):
     await message.answer("Раздел: 📦 Заказы", reply_markup=submenu([
