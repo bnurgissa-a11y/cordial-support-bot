@@ -542,6 +542,7 @@ async def handle_message(message: Message):
     user_id = message.from_user.id
     state = user_states.get(user_id)
 
+    # Ответ менеджера на заявку через Reply в группе
     if message.chat.type != "private" and message.reply_to_message:
         replied_message_id = message.reply_to_message.message_id
 
@@ -549,18 +550,14 @@ async def handle_message(message: Message):
             ticket_id = ticket_messages[replied_message_id]
 
             if ticket_id not in tickets:
-                await message.answer(
-                    "Заявка не найдена. Возможно, бот перезапускался."
-                )
+                await message.answer("Заявка не найдена. Возможно, бот перезапускался.")
                 return
 
             partner_user_id = tickets[ticket_id]["user_id"]
             answer_text = message.text
 
             if not answer_text:
-                await message.answer(
-                    "Пока можно отправлять только текстовый ответ."
-                )
+                await message.answer("Пока можно отправлять только текстовый ответ.")
                 return
 
             await bot.send_message(
@@ -572,6 +569,8 @@ async def handle_message(message: Message):
 
             await message.answer("✅ Ответ отправлен партнеру.")
             return
+
+    # Ответ менеджера через команду /answer
     if message.text and message.text.startswith("/answer"):
         if message.chat.type == "private":
             await message.answer("Эта команда работает только в группе отдела.")
@@ -583,7 +582,12 @@ async def handle_message(message: Message):
             await message.answer("Формат: /answer 1001 Ваш ответ партнеру")
             return
 
-        ticket_id = int(parts[1])
+        try:
+            ticket_id = int(parts[1])
+        except ValueError:
+            await message.answer("Номер заявки должен быть числом.")
+            return
+
         answer_text = parts[2]
 
         if ticket_id not in tickets:
@@ -601,6 +605,8 @@ async def handle_message(message: Message):
 
         await message.answer("✅ Ответ отправлен партнеру.")
         return
+
+    # Создание заявки: шаг 1 — ID партнера
     if state:
         if state["step"] == "waiting_partner_id":
             state["partner_id"] = message.text
@@ -608,6 +614,7 @@ async def handle_message(message: Message):
             await message.answer("Теперь подробно опишите ваш вопрос или проблему:")
             return
 
+        # Создание заявки: шаг 2 — описание проблемы
         if state["step"] == "waiting_problem":
             problem = message.text
             department = state["department"]
@@ -642,8 +649,7 @@ async def handle_message(message: Message):
             )
 
             sent_message = await bot.send_message(chat_id=group_id, text=text)
-
-ticket_messages[sent_message.message_id] = ticket_id
+            ticket_messages[sent_message.message_id] = ticket_id
 
             await message.answer(
                 "✅ Ваша заявка принята и отправлена в нужный отдел.\n\n"
@@ -654,11 +660,10 @@ ticket_messages[sent_message.message_id] = ticket_id
             user_states.pop(user_id, None)
             return
 
+    # Все остальные сообщения идут в AI
     await message.answer("⏳ AI-консультант готовит ответ...")
     answer = await ask_ai(user_id, message.text)
     await message.answer(answer, reply_markup=MAIN_MENU)
-
-
 async def main():
     await dp.start_polling(bot)
 
