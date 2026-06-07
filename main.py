@@ -40,11 +40,14 @@ user_threads = {}
 
 MAIN_MENU = ReplyKeyboardMarkup(
     keyboard=[
+        [KeyboardButton(text="🤖 AI-консультант"), KeyboardButton(text="📸 Анализ кожи")],
+        [KeyboardButton(text="📚 Каталог продукции"), KeyboardButton(text="💎 Маркетинг-план")],
+        [KeyboardButton(text="🧴 Подбор ухода"), KeyboardButton(text="🧲 Скрипты продаж")],
+        [KeyboardButton(text="❓ Возражения клиентов")],
         [KeyboardButton(text="📦 Заказы"), KeyboardButton(text="💰 Бонусы")],
         [KeyboardButton(text="👥 Регистрация"), KeyboardButton(text="🏪 ПВЗ")],
         [KeyboardButton(text="🚚 Доставка"), KeyboardButton(text="💄 Продукция")],
         [KeyboardButton(text="🎓 Обучение"), KeyboardButton(text="📄 Документы")],
-        [KeyboardButton(text="🤖 AI-консультант"), KeyboardButton(text="📸 Анализ кожи")],
         [KeyboardButton(text="☎️ Связаться с офисом")],
     ],
     resize_keyboard=True,
@@ -135,6 +138,71 @@ async def skin_analysis_start(message: Message):
         "• лицо полностью видно\n"
         "• без фильтров\n"
         "• без очков"
+    )
+@dp.message(F.text == "📚 Каталог продукции")
+async def catalog_ai(message: Message):
+    await message.answer(
+        "📚 Каталог продукции Cordial Care\n\n"
+        "Напишите название продукта или вопрос.\n\n"
+        "Примеры:\n"
+        "• Цена коллагена\n"
+        "• Состав Calcium Madi D3\n"
+        "• Что такое Wellseed Banaba?\n"
+        "• Расскажи про ESROOM Essence\n"
+        "• Какие продукты подходят для кожи?"
+    )
+
+@dp.message(F.text == "💎 Маркетинг-план")
+async def marketing_ai(message: Message):
+    await message.answer(
+        "💎 Маркетинг-план Cordial Care\n\n"
+        "Напишите вопрос по маркетинг-плану.\n\n"
+        "Примеры:\n"
+        "• Как считается бинарный бонус?\n"
+        "• Что такое реферальный бонус?\n"
+        "• Как получить матчинг бонус?\n"
+        "• Какие есть статусы?\n"
+        "• Сделай расчет на примере"
+    )
+
+@dp.message(F.text == "🧴 Подбор ухода")
+async def skincare_ai(message: Message):
+    await message.answer(
+        "🧴 Подбор ухода\n\n"
+        "Опишите вашу ситуацию:\n"
+        "• возраст\n"
+        "• тип кожи\n"
+        "• основная проблема\n"
+        "• что уже используете\n\n"
+        "Пример:\n"
+        "Мне 35 лет, кожа сухая, есть пигментация и морщины. Что посоветуете?\n\n"
+        "Для точного анализа нажмите 📸 Анализ кожи и загрузите фото."
+    )
+
+@dp.message(F.text == "🧲 Скрипты продаж")
+async def scripts_ai(message: Message):
+    await message.answer(
+        "🧲 Скрипты продаж\n\n"
+        "Напишите, какой скрипт нужен.\n\n"
+        "Примеры:\n"
+        "• Скрипт приглашения в бизнес\n"
+        "• Скрипт для клиента на коллаген\n"
+        "• Скрипт для косметолога\n"
+        "• Сообщение для WhatsApp\n"
+        "• Сторис для Instagram"
+    )
+
+@dp.message(F.text == "❓ Возражения клиентов")
+async def objections_ai(message: Message):
+    await message.answer(
+        "❓ Работа с возражениями\n\n"
+        "Напишите возражение клиента или партнера.\n\n"
+        "Примеры:\n"
+        "• Дорого\n"
+        "• Я подумаю\n"
+        "• Это пирамида?\n"
+        "• У меня нет времени\n"
+        "• Я не умею продавать"
     )
 @dp.message(F.text == "📦 Заказы")
 async def orders(message: Message):
@@ -260,6 +328,11 @@ REQUEST_ROUTES = {
 }
 
 AI_TOPICS = {
+    "📚 Каталог продукции",
+    "💎 Маркетинг-план",
+    "🧴 Подбор ухода",
+    "🧲 Скрипты продаж",
+    "❓ Возражения клиентов",
     "📈 Как считается бонус",
     "🎁 Реферальный бонус",
     "🔷 Бинарный бонус",
