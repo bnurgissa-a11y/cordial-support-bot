@@ -644,11 +644,10 @@ async def handle_ticket_file(message: Message):
         await create_ticket(message, state, attachment_message=message)
         return
 @dp.message()
-async def handle_message(message: Message):           
+async def handle_message(message: Message):
     user_id = message.from_user.id
     state = user_states.get(user_id)
 
-    # Ответ менеджера на заявку через Reply в группе
     # Ответ менеджера на заявку через Reply в группе
     if message.chat.type != "private" and message.reply_to_message:
         replied_message_id = message.reply_to_message.message_id
@@ -666,14 +665,9 @@ async def handle_message(message: Message):
                 f"📩 Ответ службы поддержки Cordial Care\n\n"
                 f"Заявка №{ticket_id}\n\n"
             )
-    if state and state.get("step") == "waiting_attachment" and message.text == "➡️ Пропустить":
-        await create_ticket(message, state)
-        return
+
             if message.text:
-                await bot.send_message(
-                    partner_user_id,
-                    caption + message.text
-                )
+                await bot.send_message(partner_user_id, caption + message.text)
 
             elif message.photo:
                 await bot.send_photo(
@@ -739,7 +733,12 @@ async def handle_message(message: Message):
         await message.answer("✅ Ответ отправлен партнеру.")
         return
 
-    # Создание заявки: шаг 1 — ID партнера
+    # Пропустить вложение
+    if state and state.get("step") == "waiting_attachment" and message.text == "➡️ Пропустить":
+        await create_ticket(message, state)
+        return
+
+    # Создание заявки
     if state:
         if state["step"] == "waiting_partner_id":
             state["partner_id"] = message.text
@@ -747,8 +746,7 @@ async def handle_message(message: Message):
             await message.answer("Теперь подробно опишите ваш вопрос или проблему:")
             return
 
-        # Создание заявки: шаг 2 — описание проблемы
-                if state["step"] == "waiting_problem":
+        if state["step"] == "waiting_problem":
             state["problem"] = message.text
             state["step"] = "waiting_attachment"
 
@@ -758,6 +756,7 @@ async def handle_message(message: Message):
                 reply_markup=SKIP_ATTACHMENT_MENU
             )
             return
+
     # Все остальные сообщения идут в AI
     await message.answer("⏳ AI-консультант готовит ответ...")
     answer = await ask_ai(user_id, message.text)
