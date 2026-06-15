@@ -444,11 +444,12 @@ async def ai_topic_answer(message: Message):
 async def handle_skin_photo(message: Message):
     state = user_states.get(message.from_user.id)
 
+    # Фото как вложение к заявке
     if state and state.get("step") == "waiting_attachment":
         await create_ticket(message, state, attachment_message=message)
-        return    
-state = user_states.get(message.from_user.id)
+        return
 
+    # Фото для анализа кожи
     if not state or state.get("step") != "waiting_skin_photo":
         await message.answer(
             "Фото получено. Для анализа кожи сначала нажмите кнопку 📸 Анализ кожи."
@@ -507,7 +508,6 @@ state = user_states.get(message.from_user.id)
         )
 
         answer = response.output_text[:3900]
-
         await message.answer(answer, reply_markup=MAIN_MENU)
 
     except Exception as e:
@@ -518,41 +518,6 @@ state = user_states.get(message.from_user.id)
         )
 
     user_states.pop(message.from_user.id, None)
-    if message.chat.type == "private":
-        await message.answer("Эта команда работает только в группе отдела.")
-        return
-
-    try:
-        parts = message.text.split(maxsplit=2)
-
-        if len(parts) < 3:
-            await message.answer(
-                "Неверный формат.\n\n"
-                "Правильно:\n"
-                "/answer 1001 Ваш ответ партнеру"
-            )
-            return
-
-        ticket_id = int(parts[1])
-        answer_text = parts[2]
-
-        if ticket_id not in tickets:
-            await message.answer("Заявка не найдена. Проверьте номер заявки.")
-            return
-
-        partner_user_id = tickets[ticket_id]["user_id"]
-
-        await bot.send_message(
-            partner_user_id,
-            f"📩 Ответ службы поддержки Cordial Care\n\n"
-            f"Заявка №{ticket_id}\n\n"
-            f"{answer_text}"
-        )
-
-        await message.answer("✅ Ответ отправлен партнеру.")
-
-    except Exception as e:
-        await message.answer(f"Ошибка при отправке ответа: {e}")
 @dp.message(Command("answer"))
 async def answer_ticket(message: Message):
     if message.chat.type == "private":
