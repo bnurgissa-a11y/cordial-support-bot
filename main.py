@@ -60,6 +60,13 @@ BACK_MENU = ReplyKeyboardMarkup(
     keyboard=[[KeyboardButton(text="⬅️ Назад")]],
     resize_keyboard=True,
 )
+SKIP_ATTACHMENT_MENU = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text="➡️ Пропустить")],
+        [KeyboardButton(text="⬅️ Назад")],
+    ],
+    resize_keyboard=True,
+)
 LANGUAGE_MENU = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="🇷🇺 Русский"), KeyboardButton(text="🇰🇿 Қазақша")],
@@ -437,6 +444,11 @@ async def ai_topic_answer(message: Message):
 async def handle_skin_photo(message: Message):
     state = user_states.get(message.from_user.id)
 
+    if state and state.get("step") == "waiting_attachment":
+        await create_ticket(message, state, attachment_message=message)
+        return    
+state = user_states.get(message.from_user.id)
+
     if not state or state.get("step") != "waiting_skin_photo":
         await message.answer(
             "Фото получено. Для анализа кожи сначала нажмите кнопку 📸 Анализ кожи."
@@ -587,8 +599,87 @@ async def answer_ticket(message: Message):
 
     except Exception as e:
         await message.answer(f"Не удалось отправить ответ партнеру: {e}")
+async def create_ticket(message: Message, state: dict, attachment_message: Message | None = None):
+    global ticket_counter
+
+    ticket_counter += 1
+    ticket_id = ticket_counter
+
+    department = state["department"]
+    topic = state["topic"]
+    group_id = state["group_id"]
+    partner_id = state["partner_id"]
+    problem = state["problem"]
+
+    username = message.from_user.username
+    full_name = message.from_user.full_name
+    date = datetime.now().strftime("%d.%m.%Y %H:%M")
+
+    tickets[ticket_id] = {
+        "user_id": message.from_user.id,
+        "partner_id": partner_id,
+        "department": department,
+        "topic": topic,
+    }
+
+    text = (
+        f"📨 Заявка #{ticket_id}\n\n"
+        f"Отдел: {department}\n"
+        f"Тема: {topic}\n"
+        f"ID партнера: {partner_id}\n"
+        f"Имя: {full_name}\n"
+        f"Telegram: @{username if username else 'нет username'}\n"
+        f"Дата: {date}\n\n"
+        f"Вопрос:\n{problem}"
+    )
+
+    sent_message = await bot.send_message(chat_id=group_id, text=text)
+    ticket_messages[sent_message.message_id] = ticket_id
+
+    if attachment_message:
+        if attachment_message.photo:
+            sent_attach = await bot.send_photo(
+                group_id,
+                photo=attachment_message.photo[-1].file_id,
+                caption=f"📎 Вложение к заявке #{ticket_id}"
+            )
+            ticket_messages[sent_attach.message_id] = ticket_id
+
+        elif attachment_message.document:
+            sent_attach = await bot.send_document(
+                group_id,
+                document=attachment_message.document.file_id,
+                caption=f"📎 Вложение к заявке #{ticket_id}"
+            )
+            ticket_messages[sent_attach.message_id] = ticket_id
+
+        elif attachment_message.video:
+            sent_attach = await bot.send_video(
+                group_id,
+                video=attachment_message.video.file_id,
+                caption=f"📎 Вложение к заявке #{ticket_id}"
+            )
+            ticket_messages[sent_attach.message_id] = ticket_id
+
+    await message.answer(
+        "✅ Ваша заявка принята и отправлена в нужный отдел.\n\n"
+        "Менеджер рассмотрит обращение и свяжется с вами.",
+        reply_markup=MAIN_MENU
+    )
+
+    user_states.pop(message.from_user.id, None)
+@dp.message(F.document | F.video)
+async def handle_ticket_file(message: Message):
+    state = user_states.get(message.from_user.id)
+
+    if not state:
+        return
+
+    if state.get("step") == "waiting_attachment":
+        await create_ticket(message, state, attachment_message=message)
+        return
 @dp.message()
-async def handle_message(message: Message):
+async def handle_message(message: Message):           
     user_id = message.from_user.id
     state = user_states.get(user_id)
 
@@ -610,7 +701,9 @@ async def handle_message(message: Message):
                 f"📩 Ответ службы поддержки Cordial Care\n\n"
                 f"Заявка №{ticket_id}\n\n"
             )
-
+    if state and state.get("step") == "waiting_attachment" and message.text == "➡️ Пропустить":
+        await create_ticket(message, state)
+        return
             if message.text:
                 await bot.send_message(
                     partner_user_id,
@@ -690,51 +783,16 @@ async def handle_message(message: Message):
             return
 
         # Создание заявки: шаг 2 — описание проблемы
-        if state["step"] == "waiting_problem":
-            problem = message.text
-            department = state["department"]
-            topic = state["topic"]
-            group_id = state["group_id"]
-            partner_id = state["partner_id"]
-
-            global ticket_counter
-            ticket_counter += 1
-            ticket_id = ticket_counter
-
-            tickets[ticket_id] = {
-                "user_id": message.from_user.id,
-                "partner_id": partner_id,
-                "department": department,
-                "topic": topic,
-            }
-
-            username = message.from_user.username
-            full_name = message.from_user.full_name
-            date = datetime.now().strftime("%d.%m.%Y %H:%M")
-
-            text = (
-                f"📨 Заявка #{ticket_id}\n\n"
-                f"Отдел: {department}\n"
-                f"Тема: {topic}\n"
-                f"ID партнера: {partner_id}\n"
-                f"Имя: {full_name}\n"
-                f"Telegram: @{username if username else 'нет username'}\n"
-                f"Дата: {date}\n\n"
-                f"Вопрос:\n{problem}"
-            )
-
-            sent_message = await bot.send_message(chat_id=group_id, text=text)
-            ticket_messages[sent_message.message_id] = ticket_id
+                if state["step"] == "waiting_problem":
+            state["problem"] = message.text
+            state["step"] = "waiting_attachment"
 
             await message.answer(
-                "✅ Ваша заявка принята и отправлена в нужный отдел.\n\n"
-                "Менеджер рассмотрит обращение и свяжется с вами.",
-                reply_markup=MAIN_MENU
+                "📎 Прикрепите фото или файл к заявке.\n\n"
+                "Если вложение не нужно, нажмите ➡️ Пропустить.",
+                reply_markup=SKIP_ATTACHMENT_MENU
             )
-
-            user_states.pop(user_id, None)
             return
-
     # Все остальные сообщения идут в AI
     await message.answer("⏳ AI-консультант готовит ответ...")
     answer = await ask_ai(user_id, message.text)
