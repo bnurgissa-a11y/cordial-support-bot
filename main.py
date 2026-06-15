@@ -440,6 +440,51 @@ async def ai_topic_answer(message: Message):
         f"Ответь как Cordial AI Consultant по теме: {message.text}"
     )
     await message.answer(answer, reply_markup=MAIN_MENU)
+@dp.message((F.photo | F.document | F.video) & F.reply_to_message)
+async def handle_manager_attachment_reply(message: Message):
+    if message.chat.type == "private":
+        return
+
+    replied_message_id = message.reply_to_message.message_id
+
+    if replied_message_id not in ticket_messages:
+        return
+
+    ticket_id = ticket_messages[replied_message_id]
+
+    if ticket_id not in tickets:
+        await message.answer("Заявка не найдена. Возможно, бот перезапускался.")
+        return
+
+    partner_user_id = tickets[ticket_id]["user_id"]
+
+    caption = (
+        f"📩 Ответ службы поддержки Cordial Care\n\n"
+        f"Заявка №{ticket_id}\n\n"
+    )
+
+    if message.photo:
+        await bot.send_photo(
+            partner_user_id,
+            photo=message.photo[-1].file_id,
+            caption=caption + (message.caption or "")
+        )
+
+    elif message.document:
+        await bot.send_document(
+            partner_user_id,
+            document=message.document.file_id,
+            caption=caption + (message.caption or "")
+        )
+
+    elif message.video:
+        await bot.send_video(
+            partner_user_id,
+            video=message.video.file_id,
+            caption=caption + (message.caption or "")
+        )
+
+    await message.answer("✅ Вложение отправлено партнеру.")
 @dp.message(F.photo)
 async def handle_skin_photo(message: Message):
     state = user_states.get(message.from_user.id)
