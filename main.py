@@ -593,6 +593,7 @@ async def handle_message(message: Message):
     state = user_states.get(user_id)
 
     # Ответ менеджера на заявку через Reply в группе
+    # Ответ менеджера на заявку через Reply в группе
     if message.chat.type != "private" and message.reply_to_message:
         replied_message_id = message.reply_to_message.message_id
 
@@ -604,18 +605,42 @@ async def handle_message(message: Message):
                 return
 
             partner_user_id = tickets[ticket_id]["user_id"]
-            answer_text = message.text
 
-            if not answer_text:
-                await message.answer("Пока можно отправлять только текстовый ответ.")
-                return
-
-            await bot.send_message(
-                partner_user_id,
+            caption = (
                 f"📩 Ответ службы поддержки Cordial Care\n\n"
                 f"Заявка №{ticket_id}\n\n"
-                f"{answer_text}"
             )
+
+            if message.text:
+                await bot.send_message(
+                    partner_user_id,
+                    caption + message.text
+                )
+
+            elif message.photo:
+                await bot.send_photo(
+                    partner_user_id,
+                    photo=message.photo[-1].file_id,
+                    caption=caption + (message.caption or "")
+                )
+
+            elif message.document:
+                await bot.send_document(
+                    partner_user_id,
+                    document=message.document.file_id,
+                    caption=caption + (message.caption or "")
+                )
+
+            elif message.video:
+                await bot.send_video(
+                    partner_user_id,
+                    video=message.video.file_id,
+                    caption=caption + (message.caption or "")
+                )
+
+            else:
+                await message.answer("Этот тип сообщения пока не поддерживается.")
+                return
 
             await message.answer("✅ Ответ отправлен партнеру.")
             return
