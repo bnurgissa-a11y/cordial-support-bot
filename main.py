@@ -46,8 +46,8 @@ MAIN_MENU = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="🤖 AI-консультант"), KeyboardButton(text="📸 Анализ кожи")],
         [KeyboardButton(text="📚 Каталог продукции"), KeyboardButton(text="💎 Маркетинг-план")],
-        [KeyboardButton(text="🧴 Подбор ухода"), KeyboardButton(text="🧲 Скрипты продаж")],
-        [KeyboardButton(text="❓ Возражения клиентов")],
+        [KeyboardButton(text="🧴 Подбор ухода"), KeyboardButton(text="📱 SMM")],
+        [KeyboardButton(text="🧲 Скрипты продаж"), KeyboardButton(text="❓ Возражения клиентов")],
         [KeyboardButton(text="📦 Заказы"), KeyboardButton(text="💰 Бонусы")],
         [KeyboardButton(text="👥 Регистрация"), KeyboardButton(text="🏪 ПВЗ")],
         [KeyboardButton(text="🚚 Доставка"), KeyboardButton(text="💄 Продукция")],
@@ -156,6 +156,11 @@ async def set_language(message: Message):
     await message.answer(
         texts[user_languages[message.from_user.id]],
         reply_markup=MAIN_MENU
+    )
+@dp.message(F.text == "chat id")
+async def get_chat_id(message: Message):
+    await message.answer(
+        f"Chat ID: {message.chat.id}"
     )
 @dp.message(F.text == "⬅️ Назад")
 async def back(message: Message):
