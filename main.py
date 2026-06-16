@@ -34,6 +34,7 @@ FINANCE_GROUP_ID = -5012459213
 LOGISTICS_GROUP_ID = -5175392722
 PVZ_GROUP_ID = -5023952843
 TRAINING_GROUP_ID = -5236071492
+SMM_GROUP_ID = -5300942912
 
 user_states = {}
 user_threads = {}
@@ -44,17 +45,13 @@ user_languages = {}
 
 MAIN_MENU = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="🤖 AI-консультант"), KeyboardButton(text="📸 Анализ кожи")],
-        [KeyboardButton(text="📚 Каталог продукции"), KeyboardButton(text="💎 Маркетинг-план")],
-        [KeyboardButton(text="🧴 Подбор ухода"), KeyboardButton(text="📱 SMM")],
-        [KeyboardButton(text="🧲 Скрипты продаж"), KeyboardButton(text="❓ Возражения клиентов")],
         [KeyboardButton(text="📦 Заказы"), KeyboardButton(text="💰 Бонусы")],
-        [KeyboardButton(text="👥 Регистрация"), KeyboardButton(text="🏪 ПВЗ")],
-        [KeyboardButton(text="🚚 Доставка"), KeyboardButton(text="💄 Продукция")],
-        [KeyboardButton(text="🎓 Обучение"), KeyboardButton(text="📄 Документы")],
-        [KeyboardButton(text="☎️ Связаться с офисом")],
+        [KeyboardButton(text="👥 Регистрация"), KeyboardButton(text="🏢 ПВЗ")],
+        [KeyboardButton(text="🚚 Доставка"), KeyboardButton(text="🚨 Продукция")],
+        [KeyboardButton(text="🎓 Обучение"), KeyboardButton(text="📱 SMM")],
+        [KeyboardButton(text="📄 Документы")],
     ],
-    resize_keyboard=True,
+    resize_keyboard=True
 )
 BACK_MENU = ReplyKeyboardMarkup(
     keyboard=[[KeyboardButton(text="⬅️ Назад")]],
@@ -257,6 +254,13 @@ async def objections_ai(message: Message):
         "• У меня нет времени\n"
         "• Я не умею продавать"
     )
+@dp.message(F.text == "📱 SMM")
+async def smm_menu(message: Message):
+    await message.answer(
+        "Раздел: 📱 SMM",
+        reply_markup=submenu([
+            "📸 Сторис",
+                    ]))
 @dp.message(F.text == "📦 Заказы")
 async def orders(message: Message):
     await message.answer("Раздел: 📦 Заказы", reply_markup=submenu([
@@ -390,6 +394,8 @@ REQUEST_ROUTES = {
     "🚚 Логистика": ("Логистика", LOGISTICS_GROUP_ID),
 
     "🎓 Отдел обучения": ("Обучение", TRAINING_GROUP_ID),
+
+    "📸 Сторис": ("SMM", SMM_GROUP_ID),
 }
 
 AI_TOPICS = {
