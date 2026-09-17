@@ -283,14 +283,16 @@ async def bonuses(message: Message):
 
 @dp.message(F.text == "👥 Регистрация")
 async def registration(message: Message):
-    await message.answer("Раздел: 👥 Регистрация", reply_markup=submenu([
-        "🆔 Проблема с регистрацией",
-        "🔑 Не могу войти",
-        "📱 Смена телефона",
-        "📧 Смена почты",
-        "👤 Изменение данных",
-    ]))
-
+    await message.answer(
+        "Раздел: 👥 Регистрация",
+        reply_markup=submenu([
+            "💳 Регистрация в рассрочку",
+            "🆔 Проблема с регистрацией",
+            "🔑 Не могу войти",
+            "📧 Смена почты",
+            "👤 Изменение данных",
+        ])
+    )
 @dp.message(F.text == "🏪 ПВЗ")
 async def pvz(message: Message):
     await message.answer("Раздел: 🏪 ПВЗ", reply_markup=submenu([
@@ -375,7 +377,7 @@ REQUEST_ROUTES = {
 
     "🆔 Проблема с регистрацией": ("Регистрация", TRAINING_GROUP_ID),
     "🔑 Не могу войти": ("Регистрация", TRAINING_GROUP_ID),
-    "📱 Смена телефона": ("Регистрация", TRAINING_GROUP_ID),
+    "💳 Регистрация в рассрочку": ("Регистрация", REGISTRATION_CHAT_ID),
     "📧 Смена почты": ("Регистрация", TRAINING_GROUP_ID),
     "👤 Изменение данных": ("Регистрация", TRAINING_GROUP_ID),
 
